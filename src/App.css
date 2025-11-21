@@ -1,42 +1,90 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+.App {
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.bg-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   padding: 2rem;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.form-gradient {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-@keyframes logo-spin {
+.btn-gradient {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.file-upload-area {
+  background: rgba(248, 249, 250, 0.8);
+  border: 2px dashed #dee2e6 !important;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.file-upload-area:hover {
+  background: rgba(233, 236, 239, 0.8);
+  border-color: #667eea !important;
+}
+
+.qr-container {
+  position: relative;
+  display: inline-block;
+}
+
+.qr-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .glass-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .display-4 {
+    font-size: 2rem;
+  }
+}
+
+/* Animation for upload area */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+.glass-card {
+  animation: fadeIn 0.5s ease-in;
 }
