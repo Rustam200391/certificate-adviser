@@ -683,9 +683,35 @@ function CertificateForm() {
           width: "100%",
         }}
       >
-        <h2 style={{ marginBottom: "20px", color: "#333" }}>
-          Medical Certificate QR Generator
-        </h2>
+        {/* Header with Logo */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "20px",
+            paddingBottom: "20px",
+            borderBottom: "2px solid #e9ecef",
+          }}
+        >
+          <img
+            src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187"
+            alt="International SOS"
+            style={{
+              height: "50px",
+              marginRight: "15px",
+              objectFit: "contain",
+            }}
+          />
+          <div>
+            <h2 style={{ margin: "0 0 5px 0", color: "#333" }}>
+              Medical Certificate QR Generator
+            </h2>
+            <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+              Professional Certificate Management System
+            </p>
+          </div>
+        </div>
 
         {/* Doctor Information Section */}
         <div
@@ -1204,6 +1230,20 @@ function CertificateForm() {
           <p style={{ margin: 0, color: "#856404", fontSize: "12px" }}>
             💡 <strong>Note:</strong> Currently using mock database save.
             Replace with real API endpoint when backend is ready.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            marginTop: "20px",
+            paddingTop: "15px",
+            borderTop: "1px solid #e9ecef",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, color: "#6c757d", fontSize: "12px" }}>
+            Medical Certificate QR Generator System © 2024
           </p>
         </div>
       </div>
