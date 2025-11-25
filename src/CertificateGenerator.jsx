@@ -6,6 +6,7 @@ function CertificateForm() {
   const [progressText, setProgressText] = useState("");
   const [certFile, setCertFile] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [pdfPages, setPdfPages] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [qrPosition, setQrPosition] = useState({ x: 10, y: 10 });
@@ -28,6 +29,7 @@ function CertificateForm() {
     setLoading(false);
     setProgressText("");
     setError("");
+    setSuccess("");
     setPdfPages([]);
     setCurrentPage(0);
     setQrPosition({ x: 10, y: 10 });
@@ -266,7 +268,7 @@ function CertificateForm() {
     const issueDate = new Date(doctorData.issueDate);
     const expiryDate = new Date(issueDate);
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-    return `Valid until: ${expiryDate.toLocaleDateString()}`;
+    return `Valid until: ${expiryDate.toLocaleDateString("en-US")}`;
   };
 
   // Function to draw QR code
@@ -437,19 +439,16 @@ function CertificateForm() {
     redrawCanvas();
   };
 
-  const handleDownload = async () => {
-    try {
-      validateDoctorData();
-    } catch (err) {
-      setError(err.message);
-      return;
-    }
+  // Get final certificate image as blob
+  const getCertificateBlob = async () => {
+    return new Promise((resolve, reject) => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        reject(new Error("Canvas not found"));
+        return;
+      }
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    try {
-      // Create a new canvas for download with original image dimensions
+      // Create a new canvas for final certificate with original image dimensions
       const downloadCanvas = document.createElement("canvas");
       const ctx = downloadCanvas.getContext("2d");
       const certImg = new Image();
@@ -471,7 +470,7 @@ function CertificateForm() {
         const downloadX = qrPosition.x * scaleX;
         const downloadY = qrPosition.y * scaleY;
 
-        // Generate QR code for download
+        // Generate QR code for final certificate
         const qrData = generateQRData();
         QRCode.toDataURL(qrData, {
           width: downloadQrSize,
@@ -507,24 +506,139 @@ function CertificateForm() {
               downloadQrSize + padding * 2
             );
 
-            // Download
-            const link = document.createElement("a");
-            link.download = `certificate_${doctorData.fullName.replace(
-              /\s+/g,
-              "_"
-            )}_${Date.now()}.png`;
-            link.href = downloadCanvas.toDataURL("image/png", 1.0);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Convert to blob
+            downloadCanvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error("Failed to create certificate blob"));
+                }
+              },
+              "image/png",
+              1.0
+            );
           };
           qrImg.src = qrDataUrl;
         });
       };
       certImg.src = certFile;
+    });
+  };
+
+  const handleDownload = async () => {
+    try {
+      validateDoctorData();
+    } catch (err) {
+      setError(err.message);
+      return;
+    }
+
+    try {
+      const blob = await getCertificateBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `certificate_${doctorData.fullName.replace(
+        /\s+/g,
+        "_"
+      )}_${Date.now()}.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (err) {
       setError("Error downloading file: " + err.message);
       console.error("Download error:", err);
+    }
+  };
+
+  // Save certificate to database
+  const handleSaveToDatabase = async () => {
+    try {
+      validateDoctorData();
+    } catch (err) {
+      setError(err.message);
+      return;
+    }
+
+    setLoading(true);
+    setProgressText("Saving to database...");
+
+    try {
+      // Get certificate as blob
+      const certificateBlob = await getCertificateBlob();
+
+      // Create FormData for sending to server
+      const formData = new FormData();
+      formData.append(
+        "certificateImage",
+        certificateBlob,
+        `certificate_${doctorData.fullName.replace(/\s+/g, "_")}.png`
+      );
+      formData.append("doctorData", JSON.stringify(doctorData));
+      formData.append("qrData", generateQRData());
+      formData.append("timestamp", new Date().toISOString());
+
+      // TODO: Replace with your actual API endpoint
+      const response = await fetch("/api/certificates", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      setSuccess(
+        `Certificate successfully saved to database! Certificate ID: ${result.certificateId}`
+      );
+      setProgressText("");
+    } catch (err) {
+      console.error("Database save error:", err);
+      setError(
+        err.message ||
+          "Failed to save certificate to database. Please try again."
+      );
+      setProgressText("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock function for database save
+  const handleSaveToDatabaseMock = async () => {
+    try {
+      validateDoctorData();
+    } catch (err) {
+      setError(err.message);
+      return;
+    }
+
+    setLoading(true);
+    setProgressText("Saving to database...");
+
+    try {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Mock successful response
+      const mockCertificateId = `CERT_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)
+        .toUpperCase()}`;
+
+      setSuccess(
+        `Certificate successfully saved to database! Certificate ID: ${mockCertificateId}`
+      );
+      setProgressText("");
+    } catch (err) {
+      setError("Failed to save certificate to database. Please try again.");
+      setProgressText("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -747,6 +861,7 @@ function CertificateForm() {
                 onChange={(e) =>
                   handleDoctorDataChange("issueDate", e.target.value)
                 }
+                title="Select issue date"
                 style={{
                   width: "100%",
                   padding: "10px",
@@ -774,6 +889,7 @@ function CertificateForm() {
                 onChange={(e) =>
                   handleDoctorDataChange("expiryDate", e.target.value)
                 }
+                title="Select expiry date"
                 style={{
                   width: "100%",
                   padding: "10px",
@@ -810,10 +926,10 @@ function CertificateForm() {
               fontWeight: "bold",
             }}
           >
-            Supported Formats:
+            Upload Certificate Template
           </p>
           <p style={{ margin: "0", color: "#1976d2", fontSize: "14px" }}>
-            JPEG, PNG, GIF, WebP images
+            Supported formats: JPEG, PNG, GIF, WebP
           </p>
           <p
             style={{ margin: "10px 0 0 0", color: "#757575", fontSize: "12px" }}
@@ -822,20 +938,41 @@ function CertificateForm() {
           </p>
         </div>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          disabled={loading}
+        <div
           style={{
             marginBottom: "15px",
-            padding: "10px",
-            width: "100%",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            opacity: loading ? 0.6 : 1,
+            border: "2px dashed #2575fc",
+            borderRadius: "8px",
+            padding: "20px",
+            backgroundColor: "#f8f9fa",
           }}
-        />
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={loading}
+            title="Choose image file"
+            style={{
+              width: "100%",
+              padding: "10px",
+            }}
+            id="fileInput"
+          />
+          <label
+            htmlFor="fileInput"
+            style={{
+              display: "block",
+              textAlign: "center",
+              color: "#2575fc",
+              fontWeight: "bold",
+              marginTop: "10px",
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            📁 Choose Image File
+          </label>
+        </div>
 
         <button
           onClick={handleConvertPDFInfo}
@@ -851,7 +988,7 @@ function CertificateForm() {
             width: "100%",
           }}
         >
-          Need to convert PDF? Click here for instructions
+          📄 Need to convert PDF? Click here for instructions
         </button>
 
         {loading && (
@@ -891,6 +1028,21 @@ function CertificateForm() {
             }}
           >
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              color: "#2e7d32",
+              backgroundColor: "#edf7ed",
+              padding: "10px",
+              borderRadius: "5px",
+              marginBottom: "15px",
+              border: "1px solid #c8e6c9",
+            }}
+          >
+            {success}
           </div>
         )}
 
@@ -971,7 +1123,14 @@ function CertificateForm() {
           />
         </div>
 
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <button
             onClick={handleDownload}
             disabled={loading || !certFile}
@@ -985,10 +1144,31 @@ function CertificateForm() {
               fontSize: "16px",
               transition: "all 0.3s",
               flex: 1,
+              minWidth: "200px",
               opacity: loading || !certFile ? 0.6 : 1,
             }}
           >
-            Download Certificate
+            📥 Download Certificate
+          </button>
+
+          <button
+            onClick={handleSaveToDatabaseMock}
+            disabled={loading || !certFile}
+            style={{
+              background: "#28a745",
+              color: "white",
+              padding: "12px 25px",
+              border: "none",
+              borderRadius: "8px",
+              cursor: loading || !certFile ? "not-allowed" : "pointer",
+              fontSize: "16px",
+              transition: "all 0.3s",
+              flex: 1,
+              minWidth: "200px",
+              opacity: loading || !certFile ? 0.6 : 1,
+            }}
+          >
+            💾 Save to Database
           </button>
 
           {certFile && (
@@ -1004,11 +1184,27 @@ function CertificateForm() {
                 cursor: loading ? "not-allowed" : "pointer",
                 fontSize: "16px",
                 transition: "all 0.3s",
+                minWidth: "100px",
               }}
             >
-              Reset
+              🔄 Reset
             </button>
           )}
+        </div>
+
+        <div
+          style={{
+            marginTop: "15px",
+            padding: "10px",
+            backgroundColor: "#fff3cd",
+            borderRadius: "5px",
+            border: "1px solid #ffeaa7",
+          }}
+        >
+          <p style={{ margin: 0, color: "#856404", fontSize: "12px" }}>
+            💡 <strong>Note:</strong> Currently using mock database save.
+            Replace with real API endpoint when backend is ready.
+          </p>
         </div>
       </div>
 
