@@ -365,9 +365,10 @@ function CertificateForm() {
     };
   };
 
-  // Preset positions
+  // Preset positions - добавлен вариант "Top Center"
   const presetPositions = [
     { label: "↖ Top Left", x: 10, y: 10 },
+    { label: "⤴ Top Center", x: 'center', y: 10 },
     { label: "↗ Top Right", x: -10, y: 10 },
     { label: "↙ Bottom Left", x: 10, y: -10 },
     { label: "↘ Bottom Right", x: -10, y: -10 },
@@ -381,6 +382,7 @@ function CertificateForm() {
     const actualQrSize = Math.min(150, canvas.width * 0.15);
     let newX, newY;
 
+    // Calculate X position
     if (preset.x === 'center') {
       newX = (canvas.width - actualQrSize) / 2;
     } else if (preset.x < 0) {
@@ -389,6 +391,7 @@ function CertificateForm() {
       newX = preset.x;
     }
 
+    // Calculate Y position
     if (preset.y === 'center') {
       newY = (canvas.height - actualQrSize) / 2;
     } else if (preset.y < 0) {
@@ -618,29 +621,78 @@ function CertificateForm() {
         maxWidth: "900px",
         width: "100%",
       }}>
-        {/* Header with Logo */}
+        {/* Header with Logos */}
         <div style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
           marginBottom: "20px",
           paddingBottom: "20px",
           borderBottom: "2px solid #e9ecef"
         }}>
-          <img 
-            src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187" 
-            alt="International SOS"
-            style={{
-              height: "50px",
-              marginRight: "15px",
-              objectFit: "contain"
-            }}
-          />
-          <div>
-            <h2 style={{ margin: "0 0 5px 0", color: "#333" }}>Medical Certificate QR Generator</h2>
-            <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+          {/* International SOS Global Logo */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            flex: 1,
+            justifyContent: "flex-start"
+          }}>
+            <img 
+              src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187" 
+              alt="International SOS"
+              style={{
+                height: "40px",
+                marginRight: "15px",
+                objectFit: "contain"
+              }}
+            />
+          </div>
+
+          {/* Center Title */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            flex: 2
+          }}>
+            <h2 style={{ margin: "0 0 5px 0", color: "#333", textAlign: "center" }}>
+              Medical Certificate QR Generator
+            </h2>
+            <p style={{ margin: 0, color: "#666", fontSize: "14px", textAlign: "center" }}>
               Professional Certificate Management System
             </p>
+          </div>
+
+          {/* International SOS Baku Logo */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            flex: 1,
+            justifyContent: "flex-end"
+          }}>
+            <div style={{
+              textAlign: "right",
+              padding: "8px 12px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "8px",
+              border: "1px solid #e9ecef"
+            }}>
+              <div style={{
+                fontWeight: "bold",
+                color: "#2575fc",
+                fontSize: "14px",
+                marginBottom: "2px"
+              }}>
+                International SOS
+              </div>
+              <div style={{
+                fontWeight: "bold",
+                color: "#2c5530",
+                fontSize: "12px"
+              }}>
+                BAKU CLINIC
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1084,9 +1136,30 @@ function CertificateForm() {
           borderTop: "1px solid #e9ecef",
           textAlign: "center"
         }}>
-          <p style={{ margin: 0, color: "#6c757d", fontSize: "12px" }}>
-            Medical Certificate QR Generator System © 2024
-          </p>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap"
+          }}>
+            <p style={{ margin: 0, color: "#6c757d", fontSize: "12px" }}>
+              Medical Certificate QR Generator System © 2024
+            </p>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px"
+            }}>
+              <span style={{ color: "#6c757d", fontSize: "12px" }}>Powered by</span>
+              <div style={{
+                fontWeight: "bold",
+                color: "#2575fc",
+                fontSize: "12px"
+              }}>
+                International SOS Baku
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
