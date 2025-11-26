@@ -12,6 +12,7 @@ function CertificateForm() {
   const [qrPosition, setQrPosition] = useState({ x: 10, y: 10 });
   const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   const qrSize = 150;
 
   // Doctor and certificate data
@@ -21,7 +22,7 @@ function CertificateForm() {
     licenseNumber: "",
     issuingOrganization: "",
     issueDate: "",
-    expiryDate: "",
+    expiryDate: ""
   });
 
   // Reset state
@@ -39,27 +40,27 @@ function CertificateForm() {
       licenseNumber: "",
       issuingOrganization: "",
       issueDate: "",
-      expiryDate: "",
+      expiryDate: ""
     });
   }, []);
 
   // Handle doctor data input changes
   const handleDoctorDataChange = (field, value) => {
-    setDoctorData((prev) => ({
+    setDoctorData(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
 
     // Auto-calculate expiry date if issue date is set
-    if (field === "issueDate" && value) {
+    if (field === 'issueDate' && value) {
       const issueDate = new Date(value);
       const expiryDate = new Date(issueDate);
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-
-      const formattedExpiry = expiryDate.toISOString().split("T")[0];
-      setDoctorData((prev) => ({
+      
+      const formattedExpiry = expiryDate.toISOString().split('T')[0];
+      setDoctorData(prev => ({
         ...prev,
-        expiryDate: formattedExpiry,
+        expiryDate: formattedExpiry
       }));
     }
   };
@@ -67,19 +68,17 @@ function CertificateForm() {
   // File validation
   const validateFile = (file) => {
     const validTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "application/pdf",
+      'image/jpeg', 
+      'image/jpg', 
+      'image/png', 
+      'image/gif', 
+      'image/webp',
+      'application/pdf'
     ];
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!validTypes.includes(file.type)) {
-      throw new Error(
-        "Please select an image file (JPEG, PNG, GIF, WebP) or PDF"
-      );
+      throw new Error("Please select an image file (JPEG, PNG, GIF, WebP) or PDF");
     }
 
     if (file.size > maxSize) {
@@ -113,17 +112,12 @@ function CertificateForm() {
 
   // Simple way to check if file is PDF
   const isPDFFile = (file) => {
-    return (
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf")
-    );
+    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
   };
 
   // Show message that PDF requires server processing
   const handlePDFFile = async (file) => {
-    setError(
-      "PDF processing requires server-side support. Please convert your PDF to images first or use the image upload feature."
-    );
+    setError("PDF processing requires server-side support. Please convert your PDF to images first or use the image upload feature.");
     setLoading(false);
     return;
   };
@@ -148,23 +142,20 @@ function CertificateForm() {
         const fileUrl = URL.createObjectURL(file);
         setCertFile(fileUrl);
 
-        const link =
-          "https://example.com/verify-certificate?code=" +
-          Math.random().toString(36).substr(2, 9);
+        const link = "https://example.com/verify-certificate?code=" + Math.random().toString(36).substr(2, 9);
         await generateCertificateWithQR(fileUrl, link);
-
+        
         // For compatibility with existing logic
-        setPdfPages([
-          {
-            dataUrl: fileUrl,
-            width: 0,
-            height: 0,
-            pageNumber: 1,
-          },
-        ]);
+        setPdfPages([{
+          dataUrl: fileUrl,
+          width: 0,
+          height: 0,
+          pageNumber: 1
+        }]);
       }
-
+      
       setProgressText("Ready!");
+      
     } catch (err) {
       console.error("File processing error:", err);
       setError(err.message || "An error occurred while processing the file.");
@@ -174,22 +165,17 @@ function CertificateForm() {
     }
   };
 
-  const generateCertificateWithQR = async (
-    fileUrl,
-    link,
-    width = null,
-    height = null
-  ) => {
+  const generateCertificateWithQR = async (fileUrl, link, width = null, height = null) => {
     const canvas = canvasRef.current;
     if (!canvas) throw new Error("Canvas not found");
 
     const ctx = canvas.getContext("2d");
-
+    
     return new Promise((resolve, reject) => {
       const certImg = new Image();
       certImg.crossOrigin = "anonymous";
       certImg.src = fileUrl;
-
+      
       certImg.onload = async () => {
         try {
           // Calculate dimensions to fit in preview while maintaining aspect ratio
@@ -199,10 +185,7 @@ function CertificateForm() {
           let renderHeight = certImg.height;
 
           if (certImg.width > maxWidth || certImg.height > maxHeight) {
-            const ratio = Math.min(
-              maxWidth / certImg.width,
-              maxHeight / certImg.height
-            );
+            const ratio = Math.min(maxWidth / certImg.width, maxHeight / certImg.height);
             renderWidth = certImg.width * ratio;
             renderHeight = certImg.height * ratio;
           }
@@ -210,39 +193,40 @@ function CertificateForm() {
           // Set canvas dimensions for preview
           canvas.width = renderWidth;
           canvas.height = renderHeight;
-
+          
           // Clear canvas and draw certificate centered
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+          
           // Draw image centered on canvas
           ctx.drawImage(certImg, 0, 0, renderWidth, renderHeight);
-
+          
           // Generate QR code with certificate data
           const qrData = generateQRData();
-          const qrDataUrl = await QRCode.toDataURL(qrData, {
-            width: Math.min(150, renderWidth * 0.15),
+          const qrDataUrl = await QRCode.toDataURL(qrData, { 
+            width: Math.min(150, renderWidth * 0.15), 
             margin: 1,
             color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
           });
-
+          
           const qrImg = new Image();
           qrImg.crossOrigin = "anonymous";
           qrImg.src = qrDataUrl;
-
+          
           qrImg.onload = () => {
             drawQRCode(ctx, qrImg, renderWidth, renderHeight);
             resolve();
           };
-
+          
           qrImg.onerror = () => reject(new Error("Error loading QR code"));
+          
         } catch (err) {
           reject(err);
         }
       };
-
+      
       certImg.onerror = () => reject(new Error("Error loading image"));
     });
   };
@@ -257,7 +241,7 @@ function CertificateForm() {
       issueDate: doctorData.issueDate,
       expiryDate: doctorData.expiryDate,
       validUntil: calculateValidUntil(),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
     return JSON.stringify(data, null, 2);
   };
@@ -268,41 +252,30 @@ function CertificateForm() {
     const issueDate = new Date(doctorData.issueDate);
     const expiryDate = new Date(issueDate);
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-    return `Valid until: ${expiryDate.toLocaleDateString("en-US")}`;
+    return `Valid until: ${expiryDate.toLocaleDateString('en-US')}`;
   };
 
   // Function to draw QR code
   const drawQRCode = (ctx, qrImg, canvasWidth, canvasHeight) => {
     const padding = 5;
     const actualQrSize = Math.min(150, canvasWidth * 0.15);
-
+    
     // Add white background under QR code for better readability
-    ctx.fillStyle = "white";
+    ctx.fillStyle = 'white';
     ctx.fillRect(
-      qrPosition.x - padding,
-      qrPosition.y - padding,
-      actualQrSize + padding * 2,
+      qrPosition.x - padding, 
+      qrPosition.y - padding, 
+      actualQrSize + padding * 2, 
       actualQrSize + padding * 2
     );
-
+    
     // Draw QR code
-    ctx.drawImage(
-      qrImg,
-      qrPosition.x,
-      qrPosition.y,
-      actualQrSize,
-      actualQrSize
-    );
-
+    ctx.drawImage(qrImg, qrPosition.x, qrPosition.y, actualQrSize, actualQrSize);
+    
     // Draw border around QR code (optional)
-    ctx.strokeStyle = "#2575fc";
+    ctx.strokeStyle = '#2575fc';
     ctx.lineWidth = 2;
-    ctx.strokeRect(
-      qrPosition.x - padding,
-      qrPosition.y - padding,
-      actualQrSize + padding * 2,
-      actualQrSize + padding * 2
-    );
+    ctx.strokeRect(qrPosition.x - padding, qrPosition.y - padding, actualQrSize + padding * 2, actualQrSize + padding * 2);
   };
 
   // Handlers for moving QR code
@@ -318,9 +291,9 @@ function CertificateForm() {
 
     // Check if clicked on QR code
     if (
-      x >= qrPosition.x &&
-      x <= qrPosition.x + actualQrSize &&
-      y >= qrPosition.y &&
+      x >= qrPosition.x && 
+      x <= qrPosition.x + actualQrSize && 
+      y >= qrPosition.y && 
       y <= qrPosition.y + actualQrSize
     ) {
       setIsDragging(true);
@@ -358,45 +331,34 @@ function CertificateForm() {
     const ctx = canvas.getContext("2d");
     const certImg = new Image();
     certImg.src = certFile;
-
+    
     certImg.onload = () => {
       // Clear and redraw main image
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(certImg, 0, 0, canvas.width, canvas.height);
-
+      
       // Redraw QR code
       const qrData = generateQRData();
-      QRCode.toDataURL(qrData, {
-        width: Math.min(150, canvas.width * 0.15),
+      QRCode.toDataURL(qrData, { 
+        width: Math.min(150, canvas.width * 0.15), 
         margin: 1,
-        color: { dark: "#000000", light: "#FFFFFF" },
-      }).then((qrDataUrl) => {
+        color: { dark: '#000000', light: '#FFFFFF' }
+      }).then(qrDataUrl => {
         const tempQrImg = new Image();
         tempQrImg.onload = () => {
           const actualQrSize = Math.min(150, canvas.width * 0.15);
           const padding = 5;
-          ctx.fillStyle = "white";
+          ctx.fillStyle = 'white';
           ctx.fillRect(
-            qrPosition.x - padding,
-            qrPosition.y - padding,
-            actualQrSize + padding * 2,
+            qrPosition.x - padding, 
+            qrPosition.y - padding, 
+            actualQrSize + padding * 2, 
             actualQrSize + padding * 2
           );
-          ctx.drawImage(
-            tempQrImg,
-            qrPosition.x,
-            qrPosition.y,
-            actualQrSize,
-            actualQrSize
-          );
-          ctx.strokeStyle = "#2575fc";
+          ctx.drawImage(tempQrImg, qrPosition.x, qrPosition.y, actualQrSize, actualQrSize);
+          ctx.strokeStyle = '#2575fc';
           ctx.lineWidth = 2;
-          ctx.strokeRect(
-            qrPosition.x - padding,
-            qrPosition.y - padding,
-            actualQrSize + padding * 2,
-            actualQrSize + padding * 2
-          );
+          ctx.strokeRect(qrPosition.x - padding, qrPosition.y - padding, actualQrSize + padding * 2, actualQrSize + padding * 2);
         };
         tempQrImg.src = qrDataUrl;
       });
@@ -409,7 +371,7 @@ function CertificateForm() {
     { label: "↗ Top Right", x: -10, y: 10 },
     { label: "↙ Bottom Left", x: 10, y: -10 },
     { label: "↘ Bottom Right", x: -10, y: -10 },
-    { label: "⦿ Center", x: "center", y: "center" },
+    { label: "⦿ Center", x: 'center', y: 'center' }
   ];
 
   const applyPresetPosition = (preset) => {
@@ -419,7 +381,7 @@ function CertificateForm() {
     const actualQrSize = Math.min(150, canvas.width * 0.15);
     let newX, newY;
 
-    if (preset.x === "center") {
+    if (preset.x === 'center') {
       newX = (canvas.width - actualQrSize) / 2;
     } else if (preset.x < 0) {
       newX = canvas.width - actualQrSize + preset.x;
@@ -427,7 +389,7 @@ function CertificateForm() {
       newX = preset.x;
     }
 
-    if (preset.y === "center") {
+    if (preset.y === 'center') {
       newY = (canvas.height - actualQrSize) / 2;
     } else if (preset.y < 0) {
       newY = canvas.height - actualQrSize + preset.y;
@@ -449,75 +411,60 @@ function CertificateForm() {
       }
 
       // Create a new canvas for final certificate with original image dimensions
-      const downloadCanvas = document.createElement("canvas");
-      const ctx = downloadCanvas.getContext("2d");
+      const downloadCanvas = document.createElement('canvas');
+      const ctx = downloadCanvas.getContext('2d');
       const certImg = new Image();
-
+      
       certImg.onload = () => {
         // Set download canvas to original image dimensions
         downloadCanvas.width = certImg.width;
         downloadCanvas.height = certImg.height;
-
+        
         // Draw original image
         ctx.drawImage(certImg, 0, 0, certImg.width, certImg.height);
-
+        
         // Calculate QR size for original image
         const downloadQrSize = Math.min(150, certImg.width * 0.15);
-
+        
         // Calculate position for original image (scale from preview position)
         const scaleX = certImg.width / canvas.width;
         const scaleY = certImg.height / canvas.height;
         const downloadX = qrPosition.x * scaleX;
         const downloadY = qrPosition.y * scaleY;
-
+        
         // Generate QR code for final certificate
         const qrData = generateQRData();
-        QRCode.toDataURL(qrData, {
-          width: downloadQrSize,
+        QRCode.toDataURL(qrData, { 
+          width: downloadQrSize, 
           margin: 1,
-          color: { dark: "#000000", light: "#FFFFFF" },
-        }).then((qrDataUrl) => {
+          color: { dark: '#000000', light: '#FFFFFF' }
+        }).then(qrDataUrl => {
           const qrImg = new Image();
           qrImg.onload = () => {
             const padding = 5;
             // Draw white background
-            ctx.fillStyle = "white";
+            ctx.fillStyle = 'white';
             ctx.fillRect(
-              downloadX - padding,
-              downloadY - padding,
-              downloadQrSize + padding * 2,
+              downloadX - padding, 
+              downloadY - padding, 
+              downloadQrSize + padding * 2, 
               downloadQrSize + padding * 2
             );
             // Draw QR code
-            ctx.drawImage(
-              qrImg,
-              downloadX,
-              downloadY,
-              downloadQrSize,
-              downloadQrSize
-            );
+            ctx.drawImage(qrImg, downloadX, downloadY, downloadQrSize, downloadQrSize);
             // Draw border
-            ctx.strokeStyle = "#2575fc";
+            ctx.strokeStyle = '#2575fc';
             ctx.lineWidth = 2;
-            ctx.strokeRect(
-              downloadX - padding,
-              downloadY - padding,
-              downloadQrSize + padding * 2,
-              downloadQrSize + padding * 2
-            );
-
+            ctx.strokeRect(downloadX - padding, downloadY - padding, downloadQrSize + padding * 2, downloadQrSize + padding * 2);
+            
             // Convert to blob
-            downloadCanvas.toBlob(
-              (blob) => {
-                if (blob) {
-                  resolve(blob);
-                } else {
-                  reject(new Error("Failed to create certificate blob"));
-                }
-              },
-              "image/png",
-              1.0
-            );
+            downloadCanvas.toBlob((blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error("Failed to create certificate blob"));
+              }
+            }, "image/png", 1.0);
           };
           qrImg.src = qrDataUrl;
         });
@@ -538,15 +485,13 @@ function CertificateForm() {
       const blob = await getCertificateBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `certificate_${doctorData.fullName.replace(
-        /\s+/g,
-        "_"
-      )}_${Date.now()}.png`;
+      link.download = `certificate_${doctorData.fullName.replace(/\s+/g, '_')}_${Date.now()}.png`;
       link.href = url;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      
     } catch (err) {
       setError("Error downloading file: " + err.message);
       console.error("Download error:", err);
@@ -568,21 +513,17 @@ function CertificateForm() {
     try {
       // Get certificate as blob
       const certificateBlob = await getCertificateBlob();
-
+      
       // Create FormData for sending to server
       const formData = new FormData();
-      formData.append(
-        "certificateImage",
-        certificateBlob,
-        `certificate_${doctorData.fullName.replace(/\s+/g, "_")}.png`
-      );
-      formData.append("doctorData", JSON.stringify(doctorData));
-      formData.append("qrData", generateQRData());
-      formData.append("timestamp", new Date().toISOString());
+      formData.append('certificateImage', certificateBlob, `certificate_${doctorData.fullName.replace(/\s+/g, '_')}.png`);
+      formData.append('doctorData', JSON.stringify(doctorData));
+      formData.append('qrData', generateQRData());
+      formData.append('timestamp', new Date().toISOString());
 
       // TODO: Replace with your actual API endpoint
-      const response = await fetch("/api/certificates", {
-        method: "POST",
+      const response = await fetch('/api/certificates', {
+        method: 'POST',
         body: formData,
       });
 
@@ -591,17 +532,13 @@ function CertificateForm() {
       }
 
       const result = await response.json();
-
-      setSuccess(
-        `Certificate successfully saved to database! Certificate ID: ${result.certificateId}`
-      );
+      
+      setSuccess(`Certificate successfully saved to database! Certificate ID: ${result.certificateId}`);
       setProgressText("");
+      
     } catch (err) {
       console.error("Database save error:", err);
-      setError(
-        err.message ||
-          "Failed to save certificate to database. Please try again."
-      );
+      setError(err.message || "Failed to save certificate to database. Please try again.");
       setProgressText("");
     } finally {
       setLoading(false);
@@ -622,18 +559,14 @@ function CertificateForm() {
 
     try {
       // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // Mock successful response
-      const mockCertificateId = `CERT_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)
-        .toUpperCase()}`;
-
-      setSuccess(
-        `Certificate successfully saved to database! Certificate ID: ${mockCertificateId}`
-      );
+      const mockCertificateId = `CERT_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      setSuccess(`Certificate successfully saved to database! Certificate ID: ${mockCertificateId}`);
       setProgressText("");
+      
     } catch (err) {
       setError("Failed to save certificate to database. Please try again.");
       setProgressText("");
@@ -650,271 +583,199 @@ function CertificateForm() {
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) fileInput.value = "";
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleConvertPDFInfo = () => {
-    setError(
-      "To use PDF files:\n\n1. Take screenshots of each PDF page\n2. Save as PNG/JPEG images\n3. Upload the images here\n\nOr use online tools to convert PDF to images."
-    );
+    setError("To use PDF files:\n\n1. Take screenshots of each PDF page\n2. Save as PNG/JPEG images\n3. Upload the images here\n\nOr use online tools to convert PDF to images.");
+  };
+
+  // Handle click on custom file upload button
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current && !loading) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        background: "linear-gradient(to right, #6a11cb, #2575fc)",
-        fontFamily: "Arial, sans-serif",
-        padding: "20px",
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "30px",
-          borderRadius: "15px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
-          textAlign: "center",
-          maxWidth: "900px",
-          width: "100%",
-        }}
-      >
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "100vh",
+      background: "linear-gradient(to right, #6a11cb, #2575fc)",
+      fontFamily: "Arial, sans-serif",
+      padding: "20px",
+    }}>
+      <div style={{
+        backgroundColor: "white",
+        padding: "30px",
+        borderRadius: "15px",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+        textAlign: "center",
+        maxWidth: "900px",
+        width: "100%",
+      }}>
         {/* Header with Logo */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "20px",
-            paddingBottom: "20px",
-            borderBottom: "2px solid #e9ecef",
-          }}
-        >
-          <img
-            src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187"
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "20px",
+          paddingBottom: "20px",
+          borderBottom: "2px solid #e9ecef"
+        }}>
+          <img 
+            src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187" 
             alt="International SOS"
             style={{
               height: "50px",
               marginRight: "15px",
-              objectFit: "contain",
+              objectFit: "contain"
             }}
           />
           <div>
-            <h2 style={{ margin: "0 0 5px 0", color: "#333" }}>
-              Medical Certificate QR Generator
-            </h2>
+            <h2 style={{ margin: "0 0 5px 0", color: "#333" }}>Medical Certificate QR Generator</h2>
             <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
               Professional Certificate Management System
             </p>
           </div>
         </div>
-
+        
         {/* Doctor Information Section */}
-        <div
-          style={{
-            backgroundColor: "#f8f9fa",
-            padding: "20px",
-            borderRadius: "10px",
-            marginBottom: "20px",
-            border: "1px solid #e9ecef",
-          }}
-        >
-          <h3
-            style={{
-              marginBottom: "15px",
-              color: "#495057",
-              textAlign: "left",
-            }}
-          >
-            Doctor Information
-          </h3>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "15px",
-              marginBottom: "15px",
-            }}
-          >
+        <div style={{
+          backgroundColor: "#f8f9fa",
+          padding: "20px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          border: "1px solid #e9ecef"
+        }}>
+          <h3 style={{ marginBottom: "15px", color: "#495057", textAlign: "left" }}>Doctor Information</h3>
+          
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px",
+            marginBottom: "15px"
+          }}>
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Full Name *
               </label>
               <input
                 type="text"
                 value={doctorData.fullName}
-                onChange={(e) =>
-                  handleDoctorDataChange("fullName", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('fullName', e.target.value)}
                 placeholder="Dr. John Smith"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px",
+                  fontSize: "14px"
                 }}
               />
             </div>
-
+            
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Specialty *
               </label>
               <input
                 type="text"
                 value={doctorData.specialty}
-                onChange={(e) =>
-                  handleDoctorDataChange("specialty", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('specialty', e.target.value)}
                 placeholder="Cardiology"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px",
+                  fontSize: "14px"
                 }}
               />
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "15px",
-              marginBottom: "15px",
-            }}
-          >
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px",
+            marginBottom: "15px"
+          }}>
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 License Number *
               </label>
               <input
                 type="text"
                 value={doctorData.licenseNumber}
-                onChange={(e) =>
-                  handleDoctorDataChange("licenseNumber", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('licenseNumber', e.target.value)}
                 placeholder="MED123456"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px",
+                  fontSize: "14px"
                 }}
               />
             </div>
-
+            
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Issuing Organization *
               </label>
               <input
                 type="text"
                 value={doctorData.issuingOrganization}
-                onChange={(e) =>
-                  handleDoctorDataChange("issuingOrganization", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('issuingOrganization', e.target.value)}
                 placeholder="Medical Board of Certification"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px",
+                  fontSize: "14px"
                 }}
               />
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "15px",
-            }}
-          >
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px"
+          }}>
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Issue Date *
               </label>
               <input
                 type="date"
                 value={doctorData.issueDate}
-                onChange={(e) =>
-                  handleDoctorDataChange("issueDate", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('issueDate', e.target.value)}
                 title="Select issue date"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px",
+                  fontSize: "14px"
                 }}
               />
             </div>
-
+            
             <div style={{ textAlign: "left" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                  color: "#495057",
-                }}
-              >
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Expiry Date *
               </label>
               <input
                 type="date"
                 value={doctorData.expiryDate}
-                onChange={(e) =>
-                  handleDoctorDataChange("expiryDate", e.target.value)
-                }
+                onChange={(e) => handleDoctorDataChange('expiryDate', e.target.value)}
                 title="Select expiry date"
                 style={{
                   width: "100%",
@@ -922,82 +783,97 @@ function CertificateForm() {
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
                   fontSize: "14px",
-                  backgroundColor: doctorData.expiryDate ? "#e8f5e8" : "white",
+                  backgroundColor: doctorData.expiryDate ? "#e8f5e8" : "white"
                 }}
                 readOnly={!!doctorData.issueDate}
               />
               <small style={{ color: "#6c757d", fontSize: "12px" }}>
-                {doctorData.issueDate
-                  ? "Automatically set to 1 year from issue date"
-                  : "Will be auto-calculated"}
+                {doctorData.issueDate ? "Automatically set to 1 year from issue date" : "Will be auto-calculated"}
               </small>
             </div>
           </div>
         </div>
 
         {/* File Upload Section */}
-        <div
-          style={{
-            backgroundColor: "#e3f2fd",
-            padding: "15px",
-            borderRadius: "8px",
-            marginBottom: "20px",
-            border: "1px solid #bbdefb",
-          }}
-        >
-          <p
-            style={{
-              margin: "0 0 10px 0",
-              color: "#1565c0",
-              fontWeight: "bold",
-            }}
-          >
+        <div style={{
+          backgroundColor: "#e3f2fd",
+          padding: "15px",
+          borderRadius: "8px",
+          marginBottom: "20px",
+          border: "1px solid #bbdefb"
+        }}>
+          <p style={{ margin: "0 0 10px 0", color: "#1565c0", fontWeight: "bold" }}>
             Upload Certificate Template
           </p>
           <p style={{ margin: "0", color: "#1976d2", fontSize: "14px" }}>
             Supported formats: JPEG, PNG, GIF, WebP
           </p>
-          <p
-            style={{ margin: "10px 0 0 0", color: "#757575", fontSize: "12px" }}
-          >
+          <p style={{ margin: "10px 0 0 0", color: "#757575", fontSize: "12px" }}>
             For PDF files, please convert to images first
           </p>
         </div>
-
-        <div
+        
+        {/* Hidden file input */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          disabled={loading}
+          ref={fileInputRef}
           style={{
-            marginBottom: "15px",
-            border: "2px dashed #2575fc",
-            borderRadius: "8px",
-            padding: "20px",
-            backgroundColor: "#f8f9fa",
+            display: "none"
           }}
-        >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
+          id="fileInput"
+        />
+        
+        {/* Custom file upload button */}
+        <div style={{ 
+          marginBottom: "15px",
+          border: "2px dashed #2575fc",
+          borderRadius: "8px",
+          padding: "30px",
+          backgroundColor: "#f8f9fa",
+          transition: "all 0.3s ease"
+        }}>
+          <button
+            onClick={handleFileButtonClick}
             disabled={loading}
-            title="Choose image file"
-            style={{
-              width: "100%",
-              padding: "10px",
-            }}
-            id="fileInput"
-          />
-          <label
-            htmlFor="fileInput"
             style={{
               display: "block",
-              textAlign: "center",
-              color: "#2575fc",
+              width: "100%",
+              padding: "15px",
+              backgroundColor: "#2575fc",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "16px",
               fontWeight: "bold",
-              marginTop: "10px",
               cursor: loading ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+              opacity: loading ? 0.6 : 1
+            }}
+            onMouseOver={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = "#1c6de8";
+                e.target.style.transform = "translateY(-2px)";
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = "#2575fc";
+                e.target.style.transform = "translateY(0)";
+              }
             }}
           >
-            📁 Choose Image File
-          </label>
+            📁 Choose Certificate Template
+          </button>
+          <p style={{
+            margin: "10px 0 0 0",
+            color: "#666",
+            fontSize: "14px"
+          }}>
+            {certFile ? "File selected ✓" : "Click to select an image file"}
+          </p>
         </div>
 
         <button
@@ -1011,86 +887,70 @@ function CertificateForm() {
             cursor: "pointer",
             fontSize: "14px",
             marginBottom: "15px",
-            width: "100%",
+            width: "100%"
           }}
         >
           📄 Need to convert PDF? Click here for instructions
         </button>
-
+        
         {loading && (
           <div style={{ marginBottom: "15px" }}>
             <p style={{ color: "#555", marginBottom: "5px" }}>{progressText}</p>
-            <div
-              style={{
+            <div style={{
+              width: "100%",
+              height: "4px",
+              backgroundColor: "#f0f0f0",
+              borderRadius: "2px",
+              overflow: "hidden"
+            }}>
+              <div style={{
                 width: "100%",
-                height: "4px",
-                backgroundColor: "#f0f0f0",
-                borderRadius: "2px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "#2575fc",
-                  animation: "pulse 1.5s ease-in-out infinite",
-                }}
-              />
+                height: "100%",
+                backgroundColor: "#2575fc",
+                animation: "pulse 1.5s ease-in-out infinite"
+              }} />
             </div>
           </div>
         )}
-
+        
         {error && (
-          <div
-            style={{
-              color: "#d32f2f",
-              backgroundColor: "#ffebee",
-              padding: "10px",
-              borderRadius: "5px",
-              marginBottom: "15px",
-              border: "1px solid #ffcdd2",
-              whiteSpace: "pre-line",
-            }}
-          >
+          <div style={{
+            color: "#d32f2f",
+            backgroundColor: "#ffebee",
+            padding: "10px",
+            borderRadius: "5px",
+            marginBottom: "15px",
+            border: "1px solid #ffcdd2",
+            whiteSpace: "pre-line"
+          }}>
             {error}
           </div>
         )}
 
         {success && (
-          <div
-            style={{
-              color: "#2e7d32",
-              backgroundColor: "#edf7ed",
-              padding: "10px",
-              borderRadius: "5px",
-              marginBottom: "15px",
-              border: "1px solid #c8e6c9",
-            }}
-          >
+          <div style={{
+            color: "#2e7d32",
+            backgroundColor: "#edf7ed",
+            padding: "10px",
+            borderRadius: "5px",
+            marginBottom: "15px",
+            border: "1px solid #c8e6c9"
+          }}>
             {success}
           </div>
         )}
-
+        
         {certFile && (
           <div style={{ marginBottom: "15px" }}>
-            <p
-              style={{
-                marginBottom: "10px",
-                color: "#555",
-                fontWeight: "bold",
-              }}
-            >
+            <p style={{ marginBottom: "10px", color: "#555", fontWeight: "bold" }}>
               Position QR Code:
             </p>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                gap: "8px",
-                marginBottom: "10px",
-              }}
-            >
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", 
+              gap: "8px", 
+              marginBottom: "10px" 
+            }}>
               {presetPositions.map((preset, index) => (
                 <button
                   key={index}
@@ -1103,14 +963,10 @@ function CertificateForm() {
                     borderRadius: "4px",
                     cursor: "pointer",
                     fontSize: "12px",
-                    transition: "all 0.2s",
+                    transition: "all 0.2s"
                   }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.background = "#2575fc1a")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background = "white")
-                  }
+                  onMouseOver={(e) => e.currentTarget.style.background = "#2575fc1a"}
+                  onMouseOut={(e) => e.currentTarget.style.background = "white"}
                 >
                   {preset.label}
                 </button>
@@ -1121,42 +977,33 @@ function CertificateForm() {
             </p>
           </div>
         )}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: "15px",
-            minHeight: "400px",
-          }}
-        >
-          <canvas
-            ref={canvasRef}
+        
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: "15px",
+          minHeight: "400px"
+        }}>
+          <canvas 
+            ref={canvasRef} 
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            style={{
-              border: certFile ? "2px solid #2575fc" : "none",
+            style={{ 
+              border: certFile ? "2px solid #2575fc" : "none", 
               maxWidth: "100%",
               maxHeight: "400px",
               display: certFile ? "block" : "none",
               cursor: isDragging ? "grabbing" : "grab",
               margin: "0 auto",
-              boxShadow: certFile ? "0 4px 8px rgba(0,0,0,0.1)" : "none",
-            }}
+              boxShadow: certFile ? "0 4px 8px rgba(0,0,0,0.1)" : "none"
+            }} 
           />
         </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
           <button
             onClick={handleDownload}
             disabled={loading || !certFile}
@@ -1166,17 +1013,17 @@ function CertificateForm() {
               padding: "12px 25px",
               border: "none",
               borderRadius: "8px",
-              cursor: loading || !certFile ? "not-allowed" : "pointer",
+              cursor: (loading || !certFile) ? "not-allowed" : "pointer",
               fontSize: "16px",
               transition: "all 0.3s",
               flex: 1,
               minWidth: "200px",
-              opacity: loading || !certFile ? 0.6 : 1,
+              opacity: (loading || !certFile) ? 0.6 : 1
             }}
           >
             📥 Download Certificate
           </button>
-
+          
           <button
             onClick={handleSaveToDatabaseMock}
             disabled={loading || !certFile}
@@ -1186,17 +1033,17 @@ function CertificateForm() {
               padding: "12px 25px",
               border: "none",
               borderRadius: "8px",
-              cursor: loading || !certFile ? "not-allowed" : "pointer",
+              cursor: (loading || !certFile) ? "not-allowed" : "pointer",
               fontSize: "16px",
               transition: "all 0.3s",
               flex: 1,
               minWidth: "200px",
-              opacity: loading || !certFile ? 0.6 : 1,
+              opacity: (loading || !certFile) ? 0.6 : 1
             }}
           >
             💾 Save to Database
           </button>
-
+          
           {certFile && (
             <button
               onClick={handleReset}
@@ -1210,7 +1057,7 @@ function CertificateForm() {
                 cursor: loading ? "not-allowed" : "pointer",
                 fontSize: "16px",
                 transition: "all 0.3s",
-                minWidth: "100px",
+                minWidth: "100px"
               }}
             >
               🔄 Reset
@@ -1218,44 +1065,35 @@ function CertificateForm() {
           )}
         </div>
 
-        <div
-          style={{
-            marginTop: "15px",
-            padding: "10px",
-            backgroundColor: "#fff3cd",
-            borderRadius: "5px",
-            border: "1px solid #ffeaa7",
-          }}
-        >
+        <div style={{ 
+          marginTop: "15px", 
+          padding: "10px", 
+          backgroundColor: "#fff3cd", 
+          borderRadius: "5px",
+          border: "1px solid #ffeaa7"
+        }}>
           <p style={{ margin: 0, color: "#856404", fontSize: "12px" }}>
-            💡 <strong>Note:</strong> Currently using mock database save.
-            Replace with real API endpoint when backend is ready.
+            💡 <strong>Note:</strong> Currently using mock database save. Replace with real API endpoint when backend is ready.
           </p>
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            marginTop: "20px",
-            paddingTop: "15px",
-            borderTop: "1px solid #e9ecef",
-            textAlign: "center",
-          }}
-        >
+        <div style={{
+          marginTop: "20px",
+          paddingTop: "15px",
+          borderTop: "1px solid #e9ecef",
+          textAlign: "center"
+        }}>
           <p style={{ margin: 0, color: "#6c757d", fontSize: "12px" }}>
             Medical Certificate QR Generator System © 2024
           </p>
         </div>
       </div>
-
+      
       <style jsx>{`
         @keyframes pulse {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
       `}</style>
     </div>
