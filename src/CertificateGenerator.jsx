@@ -25,6 +25,30 @@ function CertificateForm() {
     expiryDate: ""
   });
 
+  // Patient data
+  const [patientData, setPatientData] = useState({
+    fullName: "",
+    birthDate: "",
+    workplace: "",
+    insuranceNumber: ""
+  });
+
+  // Specialties list
+  const specialties = [
+    "Cardiologist",
+    "Dermatologist",
+    "General Practitioner (GP)",
+    "Gynecologist",
+    "Neurologist",
+    "Oncologist",
+    "Ophthalmologist",
+    "Pediatrician",
+    "Psychiatrist",
+    "Radiologist",
+    "Surgeon",
+    "Urologist"
+  ];
+
   // Reset state
   const resetState = useCallback(() => {
     setLoading(false);
@@ -41,6 +65,12 @@ function CertificateForm() {
       issuingOrganization: "",
       issueDate: "",
       expiryDate: ""
+    });
+    setPatientData({
+      fullName: "",
+      birthDate: "",
+      workplace: "",
+      insuranceNumber: ""
     });
   }, []);
 
@@ -63,6 +93,14 @@ function CertificateForm() {
         expiryDate: formattedExpiry
       }));
     }
+  };
+
+  // Handle patient data input changes
+  const handlePatientDataChange = (field, value) => {
+    setPatientData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // File validation
@@ -107,6 +145,19 @@ function CertificateForm() {
     }
     if (!doctorData.expiryDate) {
       throw new Error("Expiry date is required");
+    }
+  };
+
+  // Validate patient data
+  const validatePatientData = () => {
+    if (!patientData.fullName.trim()) {
+      throw new Error("Patient's full name is required");
+    }
+    if (!patientData.birthDate) {
+      throw new Error("Patient's birth date is required");
+    }
+    if (!patientData.insuranceNumber.trim()) {
+      throw new Error("Insurance number is required");
     }
   };
 
@@ -234,12 +285,20 @@ function CertificateForm() {
   // Generate QR code data with certificate information
   const generateQRData = () => {
     const data = {
+      // Doctor information
       doctorName: doctorData.fullName,
       specialty: doctorData.specialty,
       licenseNumber: doctorData.licenseNumber,
       issuingOrganization: doctorData.issuingOrganization,
       issueDate: doctorData.issueDate,
       expiryDate: doctorData.expiryDate,
+      
+      // Patient information
+      patientName: patientData.fullName,
+      patientBirthDate: patientData.birthDate,
+      patientWorkplace: patientData.workplace,
+      patientInsuranceNumber: patientData.insuranceNumber,
+      
       validUntil: calculateValidUntil(),
       timestamp: new Date().toISOString()
     };
@@ -479,6 +538,7 @@ function CertificateForm() {
   const handleDownload = async () => {
     try {
       validateDoctorData();
+      validatePatientData();
     } catch (err) {
       setError(err.message);
       return;
@@ -505,6 +565,7 @@ function CertificateForm() {
   const handleSaveToDatabase = async () => {
     try {
       validateDoctorData();
+      validatePatientData();
     } catch (err) {
       setError(err.message);
       return;
@@ -521,6 +582,7 @@ function CertificateForm() {
       const formData = new FormData();
       formData.append('certificateImage', certificateBlob, `certificate_${doctorData.fullName.replace(/\s+/g, '_')}.png`);
       formData.append('doctorData', JSON.stringify(doctorData));
+      formData.append('patientData', JSON.stringify(patientData));
       formData.append('qrData', generateQRData());
       formData.append('timestamp', new Date().toISOString());
 
@@ -552,6 +614,7 @@ function CertificateForm() {
   const handleSaveToDatabaseMock = async () => {
     try {
       validateDoctorData();
+      validatePatientData();
     } catch (err) {
       setError(err.message);
       return;
@@ -735,19 +798,25 @@ function CertificateForm() {
               <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
                 Specialty *
               </label>
-              <input
-                type="text"
+              <select
                 value={doctorData.specialty}
                 onChange={(e) => handleDoctorDataChange('specialty', e.target.value)}
-                placeholder="Cardiology"
                 style={{
                   width: "100%",
                   padding: "10px",
                   border: "1px solid #ced4da",
                   borderRadius: "5px",
-                  fontSize: "14px"
+                  fontSize: "14px",
+                  backgroundColor: "white"
                 }}
-              />
+              >
+                <option value="">Select Specialty</option>
+                {specialties.map((specialty, index) => (
+                  <option key={index} value={specialty}>
+                    {specialty}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -846,6 +915,105 @@ function CertificateForm() {
           </div>
         </div>
 
+        {/* Patient Information Section */}
+        <div style={{
+          backgroundColor: "#f0f8ff",
+          padding: "20px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          border: "1px solid #d1e7ff"
+        }}>
+          <h3 style={{ marginBottom: "15px", color: "#495057", textAlign: "left" }}>Patient Information</h3>
+          
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px",
+            marginBottom: "15px"
+          }}>
+            <div style={{ textAlign: "left" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
+                Full Name *
+              </label>
+              <input
+                type="text"
+                value={patientData.fullName}
+                onChange={(e) => handlePatientDataChange('fullName', e.target.value)}
+                placeholder="Ivanov Ivan Ivanovich"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ced4da",
+                  borderRadius: "5px",
+                  fontSize: "14px"
+                }}
+              />
+            </div>
+            
+            <div style={{ textAlign: "left" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
+                Date of Birth *
+              </label>
+              <input
+                type="date"
+                value={patientData.birthDate}
+                onChange={(e) => handlePatientDataChange('birthDate', e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ced4da",
+                  borderRadius: "5px",
+                  fontSize: "14px"
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "15px"
+          }}>
+            <div style={{ textAlign: "left" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
+                Workplace
+              </label>
+              <input
+                type="text"
+                value={patientData.workplace}
+                onChange={(e) => handlePatientDataChange('workplace', e.target.value)}
+                placeholder="Company Name"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ced4da",
+                  borderRadius: "5px",
+                  fontSize: "14px"
+                }}
+              />
+            </div>
+            
+            <div style={{ textAlign: "left" }}>
+              <label style={{ display: "block", marginBottom: "5px", fontWeight: "bold", color: "#495057" }}>
+                Insurance Number *
+              </label>
+              <input
+                type="text"
+                value={patientData.insuranceNumber}
+                onChange={(e) => handlePatientDataChange('insuranceNumber', e.target.value)}
+                placeholder="1234567890123"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "1px solid #ced4da",
+                  borderRadius: "5px",
+                  fontSize: "14px"
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* File Upload Section */}
         <div style={{
           backgroundColor: "#e3f2fd",
@@ -857,7 +1025,7 @@ function CertificateForm() {
           <p style={{ margin: "0 0 10px 0", color: "#1565c0", fontWeight: "bold" }}>
             Upload Certificate Template
           </p>
-          <p style={{ margin: "0", color: "#1976d2", fontSize: "14px" }}>
+          <p style={{ margin: 0, color: "#1976d2", fontSize: "14px" }}>
             Supported formats: JPEG, PNG, GIF, WebP
           </p>
           <p style={{ margin: "10px 0 0 0", color: "#757575", fontSize: "12px" }}>
