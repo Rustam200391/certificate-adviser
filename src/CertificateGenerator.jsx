@@ -726,36 +726,23 @@ function CertificateForm() {
             </p>
           </div>
 
-          {/* International SOS Baku Logo */}
+          {/* International SOS Baku Logo - заменен на вашу картинку */}
           <div style={{
             display: "flex",
             alignItems: "center",
             flex: 1,
             justifyContent: "flex-end"
           }}>
-            <div style={{
-              textAlign: "right",
-              padding: "8px 12px",
-              backgroundColor: "#f8f9fa",
-              borderRadius: "8px",
-              border: "1px solid #e9ecef"
-            }}>
-              <div style={{
-                fontWeight: "bold",
-                color: "#2575fc",
-                fontSize: "14px",
-                marginBottom: "2px"
-              }}>
-                International SOS
-              </div>
-              <div style={{
-                fontWeight: "bold",
-                color: "#2c5530",
-                fontSize: "12px"
-              }}>
-                BAKU CLINIC
-              </div>
-            </div>
+            <img 
+              src="/1612870561screenshot-2021-02-09-azerbaijan.jpg" 
+              alt="International SOS Azerbaijan"
+              style={{
+                height: "60px",
+                objectFit: "contain",
+                borderRadius: "5px",
+                border: "1px solid #e9ecef"
+              }}
+            />
           </div>
         </div>
         
@@ -1324,7 +1311,7 @@ function CertificateForm() {
                 color: "#2575fc",
                 fontSize: "12px"
               }}>
-                International SOS Baku
+                International SOS Azerbaijan
               </div>
             </div>
           </div>
