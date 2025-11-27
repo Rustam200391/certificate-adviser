@@ -700,15 +700,22 @@ function CertificateForm() {
             flex: 1,
             justifyContent: "flex-start"
           }}>
-            <img 
-              src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187" 
-              alt="International SOS"
-              style={{
-                height: "40px",
-                marginRight: "15px",
-                objectFit: "contain"
-              }}
-            />
+            <a 
+              href="https://www.internationalsos.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", textDecoration: "none" }}
+            >
+              <img 
+                src="https://www.internationalsos.com/-/jssmedia/main-site/images/media/logos/international-sos/intlsos-logo-white-header.png?w=180&h=auto&mw=180&rev=01e89df0f69d448eaede0d0978571187" 
+                alt="International SOS"
+                style={{
+                  height: "40px",
+                  marginRight: "15px",
+                  objectFit: "contain"
+                }}
+              />
+            </a>
           </div>
 
           {/* Center Title */}
@@ -726,23 +733,39 @@ function CertificateForm() {
             </p>
           </div>
 
-          {/* International SOS Baku Logo - заменен на вашу картинку */}
+          {/* International SOS Azerbaijan Logo - с ссылкой */}
           <div style={{
             display: "flex",
             alignItems: "center",
             flex: 1,
             justifyContent: "flex-end"
           }}>
-            <img 
-              src="/1612870561screenshot-2021-02-09-azerbaijan.jpg" 
-              alt="International SOS Azerbaijan"
-              style={{
-                height: "60px",
-                objectFit: "contain",
-                borderRadius: "5px",
-                border: "1px solid #e9ecef"
-              }}
-            />
+            <a 
+              href="https://www.internationalsos.com/locations/azerbaijan" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ display: "block" }}
+            >
+              <img 
+                src="/1612870561screenshot-2021-02-09-azerbaijan.jpg" 
+                alt="International SOS Azerbaijan"
+                style={{
+                  height: "60px",
+                  objectFit: "contain",
+                  borderRadius: "5px",
+                  border: "1px solid #e9ecef",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = "scale(1.05)";
+                  e.target.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = "scale(1)";
+                  e.target.style.boxShadow = "none";
+                }}
+              />
+            </a>
           </div>
         </div>
         
@@ -1306,13 +1329,28 @@ function CertificateForm() {
               gap: "10px"
             }}>
               <span style={{ color: "#6c757d", fontSize: "12px" }}>Powered by</span>
-              <div style={{
-                fontWeight: "bold",
-                color: "#2575fc",
-                fontSize: "12px"
-              }}>
+              <a 
+                href="https://www.internationalsos.com/locations/azerbaijan" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  fontWeight: "bold",
+                  color: "#2575fc",
+                  fontSize: "12px",
+                  textDecoration: "none",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.color = "#1c6de8";
+                  e.target.style.textDecoration = "underline";
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.color = "#2575fc";
+                  e.target.style.textDecoration = "none";
+                }}
+              >
                 International SOS Azerbaijan
-              </div>
+              </a>
             </div>
           </div>
         </div>
